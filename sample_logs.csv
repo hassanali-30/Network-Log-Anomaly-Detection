@@ -1,0 +1,6 @@
+timestamp,src_ip,dst_ip,dst_port,protocol,bytes,action,dns_query
+2026-01-01T00:00:00Z,10.0.0.10,10.0.0.20,443,tcp,1200,allowed,
+2026-01-01T00:01:00Z,10.0.0.10,10.0.0.20,443,tcp,1300,allowed,
+2026-01-01T00:02:00Z,10.0.0.10,8.8.8.8,53,udp,180,allowed,example.org
+2026-01-01T00:10:00Z,10.0.0.11,10.0.0.20,22,tcp,900,allowed,
+2026-01-01T00:11:00Z,10.0.0.11,10.0.0.21,23,tcp,700,allowed,
