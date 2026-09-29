@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "network-log-anomaly-detection"
+version = "1.0.0"
+description = "Offline, explainable anomaly detection for network logs"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+ml = ["scikit-learn>=1.4,<2"]
+test = ["pytest>=8,<9"]
+
+[project.scripts]
+network-anomaly-detector = "network_anomaly_detector:main"
