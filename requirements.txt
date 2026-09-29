@@ -1,0 +1,4 @@
+# Core analyzer uses Python standard library.
+# Optional ML outlier detection:
+scikit-learn>=1.4,<2
+pytest>=8,<9
