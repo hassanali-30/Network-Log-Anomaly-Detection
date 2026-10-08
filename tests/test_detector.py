@@ -44,3 +44,12 @@ def test_offline_boundary():
     report = detect_anomalies([], window_seconds=300)
     assert report["offline_only"] is True
     assert report["network_activity_performed"] is False
+
+
+def test_port_scan_does_not_accumulate_across_windows():
+    records = [
+        NetworkEvent(float(i * 60), "10.0.0.5", "10.0.0.9", 1000 + i, "tcp", 50, "allowed")
+        for i in range(10)
+    ]
+    report = detect_anomalies(records, window_seconds=60)
+    assert not any(item["type"] == "possible-port-scan" for item in report["findings"])

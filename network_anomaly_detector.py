@@ -139,14 +139,19 @@ def detect_anomalies(events: Iterable[NetworkEvent], window_seconds: int = 300) 
                 {"destination": destination, "timestamp": event.timestamp},
             ))
 
-    for source, source_events in by_source.items():
-        ports = {event.dst_port for event in source_events if event.dst_port is not None}
-        destinations = {event.dst_ip for event in source_events}
+    for (source, window), window_events in by_source_window.items():
+        ports = {event.dst_port for event in window_events if event.dst_port is not None}
+        destinations = {event.dst_ip for event in window_events}
         if len(ports) >= 10:
             findings.append(finding(
                 "possible-port-scan", "medium", source,
-                f"Source contacted {len(ports)} distinct destination ports.",
-                {"distinct_ports": sorted(ports), "destinations": len(destinations)},
+                f"Source contacted {len(ports)} distinct destination ports in one time window.",
+                {
+                    "distinct_ports": sorted(ports),
+                    "destinations": len(destinations),
+                    "window": window,
+                    "window_seconds": window_seconds,
+                },
             ))
 
     window_bytes: dict[str, dict[int, int]] = defaultdict(dict)
