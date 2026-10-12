@@ -72,7 +72,12 @@ def normalize_row(row: dict[str, Any]) -> NetworkEvent:
     src_ip = str(first_value(row, FIELD_ALIASES["src_ip"], "unknown-src"))
     dst_ip = str(first_value(row, FIELD_ALIASES["dst_ip"], "unknown-dst"))
     raw_port = first_value(row, FIELD_ALIASES["dst_port"], "")
-    dst_port = int(float(raw_port)) if str(raw_port).strip() else None
+    dst_port = None
+    if str(raw_port).strip():
+        numeric_port = float(raw_port)
+        if not numeric_port.is_integer() or not 0 <= numeric_port <= 65535:
+            raise ValueError(f"Invalid destination port: {raw_port}")
+        dst_port = int(numeric_port)
     raw_bytes = first_value(row, FIELD_ALIASES["bytes"], 0)
     byte_count = max(0, int(float(raw_bytes or 0)))
     return NetworkEvent(

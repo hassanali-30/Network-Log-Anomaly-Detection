@@ -53,3 +53,13 @@ def test_port_scan_does_not_accumulate_across_windows():
     ]
     report = detect_anomalies(records, window_seconds=60)
     assert not any(item["type"] == "possible-port-scan" for item in report["findings"])
+
+
+def test_invalid_destination_ports_are_rejected():
+    for invalid_port in ("-1", "65536", "22.5"):
+        try:
+            normalize_row({"timestamp": 1, "dst_port": invalid_port})
+        except ValueError as exc:
+            assert "Invalid destination port" in str(exc)
+        else:
+            raise AssertionError(f"accepted invalid port: {invalid_port}")
