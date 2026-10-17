@@ -55,6 +55,17 @@ def test_port_scan_does_not_accumulate_across_windows():
     assert not any(item["type"] == "possible-port-scan" for item in report["findings"])
 
 
+def test_port_scan_crossing_fixed_window_boundary_is_detected():
+    records = [
+        NetworkEvent(float(55 + i), "10.0.0.5", "10.0.0.9", 1000 + i, "tcp", 50, "allowed")
+        for i in range(10)
+    ]
+    report = detect_anomalies(records, window_seconds=60)
+    scan = next(item for item in report["findings"] if item["type"] == "possible-port-scan")
+    assert scan["evidence"]["window_start"] == 55.0
+    assert scan["evidence"]["window_end"] == 64.0
+
+
 def test_invalid_destination_ports_are_rejected():
     for invalid_port in ("-1", "65536", "22.5"):
         try:

@@ -14,7 +14,7 @@ import json
 import math
 import statistics
 import sys
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, deque
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -144,20 +144,32 @@ def detect_anomalies(events: Iterable[NetworkEvent], window_seconds: int = 300) 
                 {"destination": destination, "timestamp": event.timestamp},
             ))
 
-    for (source, window), window_events in by_source_window.items():
-        ports = {event.dst_port for event in window_events if event.dst_port is not None}
-        destinations = {event.dst_ip for event in window_events}
-        if len(ports) >= 10:
-            findings.append(finding(
-                "possible-port-scan", "medium", source,
-                f"Source contacted {len(ports)} distinct destination ports in one time window.",
-                {
-                    "distinct_ports": sorted(ports),
-                    "destinations": len(destinations),
-                    "window": window,
-                    "window_seconds": window_seconds,
-                },
-            ))
+    for source, source_events in by_source.items():
+        activity: deque[NetworkEvent] = deque()
+        port_counts: Counter[int] = Counter()
+        for event in source_events:
+            if event.dst_port is None:
+                continue
+            while activity and event.timestamp - activity[0].timestamp > window_seconds:
+                expired = activity.popleft()
+                port_counts[expired.dst_port] -= 1
+                if port_counts[expired.dst_port] == 0:
+                    del port_counts[expired.dst_port]
+            activity.append(event)
+            port_counts[event.dst_port] += 1
+            if len(port_counts) >= 10:
+                findings.append(finding(
+                    "possible-port-scan", "medium", source,
+                    f"Source contacted {len(port_counts)} distinct destination ports within {window_seconds} seconds.",
+                    {
+                        "distinct_ports": sorted(port_counts),
+                        "destinations": len({item.dst_ip for item in activity}),
+                        "window_start": activity[0].timestamp,
+                        "window_end": event.timestamp,
+                        "window_seconds": window_seconds,
+                    },
+                ))
+                break
 
     window_bytes: dict[str, dict[int, int]] = defaultdict(dict)
     for (source, window), window_events in by_source_window.items():
